@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#000000</color>
+    <color name="colorPrimaryclick">#262627</color>
+    <color name="colorPrimaryDark">#000000</color>
+
+    <color name="colorAccent">#000000</color>
+    <color name="white">#ffffff</color>
+    <color name="black">#171A29</color>
+    <color name="colorgrey0">#F9F9F9</color>
+    <color name="colorgrey1">#F4F3F3</color>
+    <color name="colorgrey">#CFCFCF</color>
+    <color name="colorgrey2">#B3B3B3</color>
+    <color name="colorgrey3">#7A7878</color>
+
+    <color name="tranfarnt">#00D32A1E</color>
+    <color name="colorgreen">#61B047</color>
+    <color name="colorerror">#FF5657</color>
+    <color name="selectcolor">#000000</color>
+
+</resources>
