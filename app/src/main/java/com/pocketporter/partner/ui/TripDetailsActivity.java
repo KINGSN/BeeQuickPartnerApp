@@ -11,6 +11,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -61,6 +62,7 @@ import org.json.JSONObject;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -119,6 +121,7 @@ public class TripDetailsActivity extends AppCompatActivity implements OnMapReady
     private Polyline currentPolyline;
     private FusedLocationProviderClient fusedLocationClient;
     Double  distanceDouble;
+    public String time;
 
     private static double distance(double lat1, double lon1, double lat2, double lon2) {
         if ((lat1 == lat2) && (lon1 == lon2)) {
@@ -192,6 +195,14 @@ public class TripDetailsActivity extends AppCompatActivity implements OnMapReady
       //  dist = distance(item.getPickLat(), item.getPickLng(), item.getDropLat(), item.getDropLng());
         try {
             distance2(item.getPickAddress(),item.getDropAddress());
+
+          /*  if (time < 60) {
+                txtTime.setText(new DecimalFormat("##").format(time) + " mins");
+
+            } else {
+                double tamp = time / 60;
+                txtTime.setText(new DecimalFormat("##.##").format(tamp) + " Hours");
+            }*/
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -206,14 +217,7 @@ public class TripDetailsActivity extends AppCompatActivity implements OnMapReady
             e.printStackTrace();
         }*/
         txtAmount.setText(sessionManager.getStringData(currency) + item.getSubtotal());
-        Double time = dist * 10;
-        if (time < 60) {
-            txtTime.setText(new DecimalFormat("##").format(time) + " mins");
 
-        } else {
-            double tamp = time / 60;
-            txtTime.setText(new DecimalFormat("##.##").format(tamp) + " Hours");
-        }
 
         if (item.getOrderStatus().equalsIgnoreCase("Pending")) {
             txtReject.setVisibility(View.VISIBLE);
@@ -274,10 +278,13 @@ public class TripDetailsActivity extends AppCompatActivity implements OnMapReady
 
     @Override
     public void callback(JsonObject result, String callNo) {
+        Log.d("darwinbark", "callback: "+result);
+
         try {
             custPrograssbar.closePrograssBar();
             if (callNo.equalsIgnoreCase("1")) {
                 isChange = true;
+               // Log.d("darwinbark", "callbackjason: "+result.get("Result")+"\n"+result.get("ResponseMsg"));
                 //finish();
                 //todo rmeove toast
                 // Toast.makeText(this, "callback json "+result, Toast.LENGTH_SHORT).show();
@@ -291,8 +298,18 @@ public class TripDetailsActivity extends AppCompatActivity implements OnMapReady
                     visibleForDrop();
                 }
                 if (clickedButtonId.equalsIgnoreCase("accept")) {
-                    Toast.makeText(this, "Order Accept", Toast.LENGTH_SHORT).show();
-                    visibleForPickup();
+                    if(!result.get("Result").getAsBoolean()){
+                        Toast.makeText(this, result.get("ResponseMsg").toString(), Toast.LENGTH_SHORT).show();
+                        new Handler().postDelayed(() -> {
+                            startActivity(new Intent(TripDetailsActivity.this, HomeActivity.class));
+                            finish();
+                        }, 2000);
+                    }else{
+                        Toast.makeText(this, "Order Accept", Toast.LENGTH_SHORT).show();
+                        visibleForPickup();
+                    }
+
+
                 }
                 if (clickedButtonId.equalsIgnoreCase("reject")) {
                     Toast.makeText(this, "Order Reject", Toast.LENGTH_SHORT).show();
@@ -328,6 +345,7 @@ public class TripDetailsActivity extends AppCompatActivity implements OnMapReady
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         RequestBody bodyRequest = RequestBody.create(MediaType.parse("application/json"), jsonObject.toString());
         Call<JsonObject> call = APIClient.getInterface().orderStatusChange(bodyRequest);
         GetResult getResult = new GetResult();
@@ -364,8 +382,8 @@ public class TripDetailsActivity extends AppCompatActivity implements OnMapReady
         txt_dropaddress.setText("" + item.getDropAddress());
         txt_ptype.setText("" + item.getPMethodName());
         txt_distance.setText("" + dist);
-
-        Double time = dist * 10;
+        txt_time.setText(time);
+        /* time = dist * 10;
 
         if (time < 60) {
             txt_time.setText(new DecimalFormat("##").format(time) + " mins");
@@ -373,7 +391,7 @@ public class TripDetailsActivity extends AppCompatActivity implements OnMapReady
         } else {
             double tamp = time / 60;
             txt_time.setText(new DecimalFormat("##.##").format(tamp) + " Hours");
-        }
+        }*/
         mBottomSheetDialog.setContentView(sheetView);
         mBottomSheetDialog.show();
     }
@@ -584,8 +602,16 @@ public class TripDetailsActivity extends AppCompatActivity implements OnMapReady
                                     .getJSONArray("elements")
                                     .getJSONObject(0)
                                     .getJSONObject("distance");
+
+                            JSONObject timeJson = new JSONObject(response)
+                                    .getJSONArray("rows")
+                                    .getJSONObject(0)
+                                    .getJSONArray("elements")
+                                    .getJSONObject(0)
+                                    .getJSONObject("duration");
                               distanceDouble = null ;
                             String distance = distanceJson.get("text").toString();
+                            String timetodeliver = timeJson.get("text").toString();
                             distance=(distance.replace("km", ""));
                             distance=(distance.replace(" ", ""));
                             if (distance.contains("km")){
@@ -601,6 +627,10 @@ public class TripDetailsActivity extends AppCompatActivity implements OnMapReady
                             Log.d("KINGSN","array_rows:"+distanceDouble);
                             dist=distanceDouble;
                             txtDistance.setText("" + dist);
+                             time = timetodeliver;
+                            txtTime.setText(timetodeliver);
+
+
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
